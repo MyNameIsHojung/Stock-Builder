@@ -24,6 +24,10 @@ fi
 
 command -v node >/dev/null || { echo "node 가 필요해요 (v18+)" >&2; exit 1; }
 
+# Trust the macOS keychain CAs too, so quote fetches work behind
+# TLS-inspecting company networks (private root CA). Node 22.15+/23.8+.
+export NODE_USE_SYSTEM_CA=1
+
 mkdir -p logs
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] start" >> "$LOG_FILE"
 PORT="$PORT" nohup node server.js >> "$LOG_FILE" 2>&1 &
