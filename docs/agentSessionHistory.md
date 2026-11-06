@@ -35,3 +35,4 @@ updated_at: 2026-11-06
   → `start.sh`에 `NODE_USE_SYSTEM_CA=1` (macOS 키체인 신뢰), fetch 오류에 cause 기록
 - 무료 호스팅(GitHub Pages / Render) 검토 → 사용자 결정으로 보류
 - 종목 순서 설정: 카드 드래그 앤 드롭 + 팝업 앞/뒤 버튼, `PUT /api/stocks/order` (전체 id 목록 검증)
+- 등락 기준을 종목별로: `stocks[].basis` (없으면 `settings.basis`), 팝업 토글, 카드 배지에 기준 표시. 상단 전체 토글은 제거하고 ⚙ 설정의 "새 종목 기본 기준"으로 이동

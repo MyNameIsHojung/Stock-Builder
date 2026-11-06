@@ -40,9 +40,13 @@ function basePct(stock, q) {
   if (!q || q.price == null || !(stock.basePrice > 0)) return null;
   return ((q.price - stock.basePrice) / stock.basePrice) * 100;
 }
+// stocks saved before per-stock basis existed fall back to the default in settings
+const stockBasis = (stock) => stock.basis || state.settings.basis;
+const BASIS_LABEL = { base: '기준가', daily: '전일' };
+
 function activePct(stock, q) {
   if (!q || q.error) return null;
-  return state.settings.basis === 'daily' ? q.dayChangePct : basePct(stock, q);
+  return stockBasis(stock) === 'daily' ? q.dayChangePct : basePct(stock, q);
 }
 const displayName = (s) => s.alias || s.name || s.symbol;
 
@@ -201,7 +205,7 @@ function updateCards() {
       el.title = q.error;
     } else if (q) {
       badge.className = 'badge ' + dirClass(pct);
-      badge.textContent = fmtPct(pct);
+      badge.textContent = `${fmtPct(pct)} ${BASIS_LABEL[stockBasis(s)]}`;
       el.querySelector('.card-price').textContent = fmtPrice(q.price, q.currency);
       el.title = '';
     } else {
@@ -221,7 +225,6 @@ async function loadState() {
   state.stocks = data.stocks;
   $('title').textContent = state.settings.title;
   document.title = state.settings.title;
-  for (const b of $('basisSeg').querySelectorAll('button')) b.classList.toggle('on', b.dataset.basis === state.settings.basis);
   renderGrid();
 }
 
@@ -349,24 +352,13 @@ $('title').addEventListener('blur', async () => {
   }
 });
 
-$('basisSeg').addEventListener('click', async (e) => {
-  const b = e.target.closest('button');
-  if (!b || b.dataset.basis === state.settings.basis) return;
-  try {
-    state.settings = await api('PATCH', '/api/settings', { basis: b.dataset.basis });
-    for (const x of $('basisSeg').querySelectorAll('button')) x.classList.toggle('on', x === b);
-    updateCards();
-  } catch (err) {
-    toast(err.message, true);
-  }
-});
-
 $('refreshBtn').addEventListener('click', refreshQuotes);
 
 $('settingsBtn').addEventListener('click', () => {
   const s = state.settings;
   $('sTitle').value = s.title;
   $('sRefresh').value = s.refreshSec;
+  $('sBasis').value = s.basis;
   [$('sT1').value, $('sT2').value, $('sT3').value] = s.tiers;
   $('settingsModal').hidden = false;
 });
@@ -375,6 +367,7 @@ $('sSave').addEventListener('click', async () => {
     state.settings = await api('PATCH', '/api/settings', {
       title: $('sTitle').value.trim() || state.settings.title,
       refreshSec: Number($('sRefresh').value),
+      basis: $('sBasis').value,
       tiers: [$('sT1').value, $('sT2').value, $('sT3').value].map(Number),
     });
     $('title').textContent = state.settings.title;
@@ -432,7 +425,9 @@ function updateDetailText() {
   $('dMoveNext').disabled = idx === state.stocks.length - 1;
   $('dName').textContent = `${s.name} · ${s.symbol}${q?.exchange ? ' · ' + q.exchange : ''}`;
   $('detailLevel').textContent = `${LEVELS[lv].emoji} ${LEVELS[lv].label} · ${floorsFor(pct, tiers)}층`;
-  $('dDesc').textContent = `${LEVELS[lv].desc} (${state.settings.basis === 'daily' ? '전일 대비' : '기준가 대비'} ${fmtPct(pct)})`;
+  const basis = stockBasis(s);
+  for (const b of $('dBasisSeg').querySelectorAll('button')) b.classList.toggle('on', b.dataset.basis === basis);
+  $('dDesc').textContent = `${LEVELS[lv].desc} (${BASIS_LABEL[basis]} 대비 ${fmtPct(pct)})`;
   if (!q || q.error) {
     $('dPrice').textContent = q?.error ? '시세 오류' : '불러오는 중…';
     $('dDay').textContent = '';
@@ -530,6 +525,19 @@ $('dSave').addEventListener('click', async () => {
     toast('저장했어요');
   } catch (e) {
     toast(e.message, true);
+  }
+});
+$('dBasisSeg').addEventListener('click', async (e) => {
+  const b = e.target.closest('button');
+  const d = state.detail;
+  const s = d && state.stocks.find((x) => x.id === d.id);
+  if (!b || !s || b.dataset.basis === stockBasis(s)) return;
+  try {
+    const updated = await api('PATCH', `/api/stocks/${s.id}`, { basis: b.dataset.basis });
+    s.basis = updated.basis;
+    updateCards();
+  } catch (err) {
+    toast(err.message, true);
   }
 });
 $('dMovePrev').addEventListener('click', () => state.detail && moveStock(state.detail.id, -1));

@@ -293,6 +293,7 @@ async function handleApi(req, res, url) {
         name: quote.name,
         alias: typeof body.alias === 'string' && body.alias.trim() ? body.alias.trim().slice(0, 30) : '',
         basePrice: Number(body.basePrice) > 0 ? Number(body.basePrice) : quote.price,
+        basis: body.basis === 'base' || body.basis === 'daily' ? body.basis : data.settings.basis,
         addedAt: new Date().toISOString(),
       };
       data.stocks.push(stock);
@@ -311,6 +312,10 @@ async function handleApi(req, res, url) {
         const bp = Number(body.basePrice);
         if (!(bp > 0)) return send(res, 400, { error: '기준가는 0보다 커야 해요' });
         s.basePrice = bp;
+      }
+      if (body.basis != null) {
+        if (body.basis !== 'base' && body.basis !== 'daily') return send(res, 400, { error: "basis는 'base' 또는 'daily'여야 해요" });
+        s.basis = body.basis;
       }
       saveData(data);
       return send(res, 200, s);
