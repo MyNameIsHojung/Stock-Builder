@@ -268,6 +268,19 @@ async function handleApi(req, res, url) {
     const data = loadData();
     const id = parts[2];
 
+    if (id === 'order' && method === 'PUT') {
+      const body = await readBody(req);
+      const ids = body.ids;
+      const current = new Set(data.stocks.map((s) => s.id));
+      const valid =
+        Array.isArray(ids) && ids.length === current.size && new Set(ids).size === ids.length && ids.every((x) => current.has(x));
+      if (!valid) return send(res, 400, { error: '순서 목록이 등록된 종목과 맞지 않아요. 새로고침 후 다시 시도해주세요' });
+      const byId = new Map(data.stocks.map((s) => [s.id, s]));
+      data.stocks = ids.map((x) => byId.get(x));
+      saveData(data);
+      return send(res, 200, data.stocks);
+    }
+
     if (!id && method === 'GET') return send(res, 200, data.stocks);
 
     if (!id && method === 'POST') {

@@ -102,6 +102,7 @@ function renderGrid() {
         </div>
         <div class="card-level"></div>`;
       el.addEventListener('click', () => openDetail(s.id));
+      bindDrag(el);
       grid.appendChild(el);
       const scene = new Scene(el.querySelector('canvas'));
       registerScene(scene);
@@ -114,6 +115,71 @@ function renderGrid() {
   layoutGrid();
   for (const c of state.cards.values()) c.scene.resize();
   updateCards();
+}
+
+// ---------- ordering ----------
+async function saveOrder(ids) {
+  const prev = state.stocks;
+  const byId = new Map(prev.map((s) => [s.id, s]));
+  state.stocks = ids.map((id) => byId.get(id));
+  renderGrid();
+  try {
+    await api('PUT', '/api/stocks/order', { ids });
+  } catch (e) {
+    toast('순서를 저장하지 못했어요: ' + e.message, true);
+    await loadState();
+  }
+}
+
+let dragId = null;
+
+function clearDropMarks() {
+  for (const c of state.cards.values()) c.el.classList.remove('drop-before', 'drop-after');
+}
+
+function bindDrag(el) {
+  el.draggable = true;
+  el.addEventListener('dragstart', (e) => {
+    dragId = el.dataset.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragId);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('dragend', () => {
+    dragId = null;
+    el.classList.remove('dragging');
+    clearDropMarks();
+  });
+  el.addEventListener('dragover', (e) => {
+    if (!dragId || dragId === el.dataset.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const r = el.getBoundingClientRect();
+    const after = e.clientX > r.left + r.width / 2;
+    clearDropMarks();
+    el.classList.add(after ? 'drop-after' : 'drop-before');
+  });
+  el.addEventListener('dragleave', () => el.classList.remove('drop-before', 'drop-after'));
+  el.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const from = dragId;
+    const to = el.dataset.id;
+    const after = el.classList.contains('drop-after');
+    clearDropMarks();
+    if (!from || from === to) return;
+    const ids = state.stocks.map((s) => s.id).filter((id) => id !== from);
+    ids.splice(ids.indexOf(to) + (after ? 1 : 0), 0, from);
+    saveOrder(ids);
+  });
+}
+
+function moveStock(id, delta) {
+  const ids = state.stocks.map((s) => s.id);
+  const i = ids.indexOf(id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  saveOrder(ids);
 }
 
 function updateCards() {
@@ -360,6 +426,10 @@ function updateDetailText() {
   const pct = activePct(s, q);
   const lv = levelFor(pct, tiers);
   d.scene.setData(pct, tiers);
+  const idx = state.stocks.indexOf(s);
+  $('dOrder').textContent = `${idx + 1} / ${state.stocks.length}번째`;
+  $('dMovePrev').disabled = idx === 0;
+  $('dMoveNext').disabled = idx === state.stocks.length - 1;
   $('dName').textContent = `${s.name} · ${s.symbol}${q?.exchange ? ' · ' + q.exchange : ''}`;
   $('detailLevel').textContent = `${LEVELS[lv].emoji} ${LEVELS[lv].label} · ${floorsFor(pct, tiers)}층`;
   $('dDesc').textContent = `${LEVELS[lv].desc} (${state.settings.basis === 'daily' ? '전일 대비' : '기준가 대비'} ${fmtPct(pct)})`;
@@ -462,6 +532,8 @@ $('dSave').addEventListener('click', async () => {
     toast(e.message, true);
   }
 });
+$('dMovePrev').addEventListener('click', () => state.detail && moveStock(state.detail.id, -1));
+$('dMoveNext').addEventListener('click', () => state.detail && moveStock(state.detail.id, 1));
 $('dAlias').addEventListener('keydown', (e) => e.key === 'Enter' && $('dSave').click());
 
 $('dDelete').addEventListener('click', async () => {

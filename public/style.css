@@ -76,6 +76,16 @@ input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   transition: transform .15s ease;
 }
 .card:hover { transform: translateY(-2px); }
+.card.dragging { opacity: .4; }
+.card.drop-before::after, .card.drop-after::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 6px; z-index: 3;
+  background: var(--accent); border-radius: 3px;
+}
+.card.drop-before::after { left: 0; }
+.card.drop-after::after { right: 0; }
+.order-row { display: flex; align-items: center; gap: 8px; }
+.order-row button { padding: 3px 10px; font-size: 13px; }
+.order-row button:disabled { opacity: .4; cursor: default; }
 .card canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .card-head {
   position: absolute; left: 10px; top: 8px; right: 10px;

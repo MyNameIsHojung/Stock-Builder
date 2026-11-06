@@ -27,3 +27,11 @@ updated_at: 2026-11-06
 **알려진 한계**
 - Yahoo 시세는 지연될 수 있음 (네이버 대비 수 분)
 - 스프라이트는 정지 이미지 1장씩이라 동작은 위치/회전/점프로 표현
+
+## 2026-11-06 — 후속 작업 (Claude / Opus 5.5)
+
+- GitHub 저장소 연결: `MyNameIsHojung/stock_game` (기존 LICENSE 커밋 위에 이어서 push)
+- 시세 실패 원인: 회사망 TLS 검사(사설 루트 인증서)로 Node가 `SELF_SIGNED_CERT_IN_CHAIN` 거부
+  → `start.sh`에 `NODE_USE_SYSTEM_CA=1` (macOS 키체인 신뢰), fetch 오류에 cause 기록
+- 무료 호스팅(GitHub Pages / Render) 검토 → 사용자 결정으로 보류
+- 종목 순서 설정: 카드 드래그 앤 드롭 + 팝업 앞/뒤 버튼, `PUT /api/stocks/order` (전체 id 목록 검증)
