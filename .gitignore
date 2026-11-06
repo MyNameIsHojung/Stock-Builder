@@ -1,0 +1,28 @@
+# --- runtime (start.sh / stop.sh) ---
+.server.pid
+logs/
+*.log
+
+# --- personal data ---
+# 개인 종목 목록. 없으면 서버가 기본값으로 새로 만듦
+data/stocks.json
+data/*.tmp
+
+# --- node / pnpm ---
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# --- env / secrets ---
+.env
+.env.*
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- local agent settings ---
+.claude/settings.local.json

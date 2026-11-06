@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Builder</title>
+  <link rel="icon" href="/assets/worker_hammer.png" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1 id="title" title="클릭해서 이름 바꾸기">우리 동네 주식 공사장</h1>
+
+    <form id="addForm" class="add" autocomplete="off">
+      <input id="addInput" placeholder="종목명 또는 코드 (예: 삼성전자, 005930, AAPL)" />
+      <button type="submit">＋ 추가</button>
+      <ul id="suggest" class="suggest" hidden></ul>
+    </form>
+
+    <div class="tools">
+      <div class="seg" id="basisSeg" title="등락률 기준">
+        <button data-basis="base">기준가 대비</button>
+        <button data-basis="daily">전일 대비</button>
+      </div>
+      <button id="refreshBtn" class="icon" title="새로고침">⟳</button>
+      <span id="updated" class="muted"></span>
+      <button id="settingsBtn" class="icon" title="설정">⚙</button>
+    </div>
+  </header>
+
+  <main id="grid" class="grid"></main>
+  <div id="empty" class="empty" hidden>
+    <img src="/assets/worker_carry.png" alt="" />
+    <p>아직 공사장이 없어요.<br />위에서 종목을 추가해보세요!</p>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- detail popup -->
+  <div id="modal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true">
+      <button class="close" data-close>✕</button>
+      <div class="detail">
+        <div class="detail-scene"><canvas id="detailCanvas"></canvas><div id="detailLevel" class="level-chip"></div></div>
+        <div class="detail-info">
+          <div class="detail-head">
+            <input id="dAlias" class="alias-input" placeholder="별명 설정" maxlength="30" />
+            <div id="dName" class="muted"></div>
+          </div>
+          <div class="price-row">
+            <span id="dPrice" class="big"></span>
+            <span id="dDay" class="chg"></span>
+          </div>
+          <div id="dBase" class="muted small"></div>
+          <p id="dDesc" class="desc"></p>
+          <dl class="stats" id="dStats"></dl>
+          <div class="chart-box">
+            <div class="ranges" id="ranges">
+              <button data-range="5d">5일</button>
+              <button data-range="1mo">1개월</button>
+              <button data-range="3mo">3개월</button>
+              <button data-range="6mo">6개월</button>
+              <button data-range="1y">1년</button>
+            </div>
+            <svg id="chart" viewBox="0 0 400 140" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="edit-row">
+            <label>기준가 <input id="dBasePrice" type="number" step="any" min="0" /></label>
+            <button id="dSave" class="primary">저장</button>
+            <button id="dDelete" class="danger">삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- settings popup -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal-card small-card" role="dialog" aria-modal="true">
+      <button class="close" data-close>✕</button>
+      <h2>설정</h2>
+      <label class="field">대시보드 이름 <input id="sTitle" maxlength="60" /></label>
+      <label class="field">새로고침 주기 (초) <input id="sRefresh" type="number" min="10" max="3600" /></label>
+      <div class="field">단계 경계 (%)
+        <div class="tiers">
+          <input id="sT1" type="number" min="0.1" step="any" />
+          <input id="sT2" type="number" min="0.1" step="any" />
+          <input id="sT3" type="number" min="0.1" step="any" />
+        </div>
+        <small class="muted">예: 10 / 20 / 30 → 0~10 느긋, 10~20 건설중, 20~30 열심히, 30+ 폭풍 (하락은 반대로 철거)</small>
+      </div>
+      <div class="edit-row"><button id="sSave" class="primary">저장</button></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

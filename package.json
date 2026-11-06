@@ -1,0 +1,17 @@
+{
+  "name": "stock-builder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "주식 등락률에 따라 꼬마 일꾼들이 건물을 짓고 부수는 애니메이션 대시보드",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "./start.sh",
+    "stop": "./stop.sh",
+    "restart": "echo '재시작 중... (pnpm restart = stop → start)'",
+    "dev": "node server.js",
+    "assets": "./scripts/genAssets.sh"
+  }
+}
