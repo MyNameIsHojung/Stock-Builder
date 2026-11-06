@@ -39,7 +39,14 @@ function saveData(data) {
 const quoteCache = new Map(); // key -> { at, value }
 
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: UA });
+  let res;
+  try {
+    res = await fetch(url, { headers: UA });
+  } catch (e) {
+    // undici hides the real reason (DNS, TLS, refused...) in e.cause
+    const c = e.cause;
+    throw new Error(`${e.message} (${new URL(url).host}${c ? `: ${c.code || ''} ${c.message || ''}`.trimEnd() : ''})`);
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${new URL(url).host}`);
   return res.json();
 }
